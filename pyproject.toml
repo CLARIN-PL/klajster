@@ -1,0 +1,106 @@
+[tool.poetry]
+name = "klajster"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+clarinpl-embeddings = "0.0.1a68769233311344"
+torch = "2.0.0"
+transformers = "^4.35.1"
+annoy = "1.17.3"
+dvc = {extras = ["s3"], version = "^3.29.0"}
+datasets = "^2.14.7"
+wandb = "^0.16.0"
+lightning = "2.0.1"
+scipy = "1.9.3"
+scikit-learn = "1.2.2"
+optuna = "^3.4.0"
+srsly = "^2.4.8"
+evaluate = "^0.4.1"
+seqeval = "^1.2.2"
+sacremoses = "^0.1.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+mypy = "^1.7.0"
+black = "^23.11.0"
+isort = {extras = ["pyproject"], version = "^5.12.0"}
+pyflakes = "^3.1.0"
+typing-extensions = "^4.8.0"
+poethepoet = "^0.24.3"
+coverage = {extras = ["toml"], version = "^7.3.2"}
+types-requests = "2.31.0.1"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[tool.poe.tasks]
+black = "black --check ./"
+isort = "isort . -c"
+black_fix = "black ./"
+isort_fix = "isort . "
+pyflakes = "pyflakes ."
+mypy = "mypy ."
+coverage_test = "coverage run -m pytest"
+coverage_report = "coverage report -m"
+test = ["coverage_test", "coverage_report"]
+check = ["black", "isort", "mypy", "pyflakes"]
+fix = ["black_fix", "isort_fix"]
+all = ["check", "test"]
+force-torch-cuda = "python -m pip install torch==2.0.0 --index-url https://download.pytorch.org/whl/cu118"
+
+[tool.poetry.extras]
+developer = ["black", "mypy", "typing-extensions"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+line_length = 100
+known_third_party = ["click", "pytest"]
+profile = "black"
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+
+[[tool.mypy.overrides]]
+module = [
+    "datasets",
+    "mlflow",
+    "numpy",
+    "pandas",
+    "sklearn.*",
+    "srsly",
+    "tqdm.*",
+    "yaml"
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "torch.testing",
+    "torch",
+    "datasets"
+]
+implicit_reexport = true
+
+
+# due to https://github.com/huggingface/transformers/issues/13390#issuecomment-934830946
+[[tool.mypy.overrides]]
+module = [
+    "transformers",
+]
+follow_imports = "skip"

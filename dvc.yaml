@@ -1,0 +1,47 @@
+stages:
+  polemo2_preprocess_dataset:
+    cmd: PYTHONPATH=. python3 experiments/scripts/preprocess_dataset.py --ds polemo2 --cfg-type lightning
+    params:
+      - experiments/configs/datasets/polemo2.yaml:
+          - common_args
+          - datasets.lightning
+    deps:
+      - experiments/scripts/preprocess_dataset.py
+    outs:
+      - data/datasets/polemo2/lightning/
+  polemo2_preprocess_dataset_hps:
+    cmd: PYTHONPATH=. python3 experiments/scripts/preprocess_dataset.py --ds polemo2 --cfg-type lightning --is-hps
+    params:
+      - experiments/configs/datasets/polemo2.yaml:
+          - common_args
+          - datasets.lightning_hps
+    deps:
+      - experiments/scripts/preprocess_dataset.py
+      - data/datasets/polemo2/lightning
+    outs:
+      - data/datasets/polemo2/lightning_hps/
+  lightning_hps_polemo2:
+    foreach:
+      - allegro__herbert-base-cased
+      - allegro__herbert-large-cased
+    do:
+      cmd: PYTHONPATH=. python3 experiments/scripts/optimize_lightning_classification.py --ds polemo2 --embedding-path ${item} --hps-config-path experiments/configs/hps/lightning_seq_512.yaml
+      deps:
+        - experiments/configs/hps/lightning_seq_512.yaml
+        - experiments/scripts/optimize_lightning_classification.py
+        - data/datasets/polemo2/lightning_hps/
+      outs:
+        - data/hps/lightning/${item}/polemo2/best_params.yaml
+        - data/hps/lightning/${item}/polemo2/hps_log.pickle
+  lightning_polemo2:
+    foreach:
+      - allegro__herbert-base-cased
+      - allegro__herbert-large-cased
+    do:
+      cmd: PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py --ds polemo2 --embedding-path ${item} --retrains 5
+      deps:
+        - experiments/scripts/evaluate_lightning_classification.py
+        - data/datasets/polemo2/lightning
+        - data/hps/lightning/${item}/polemo2/best_params.yaml
+      outs:
+        - data/models/lightning/${item}/polemo2/
