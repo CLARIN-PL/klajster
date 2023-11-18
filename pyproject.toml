@@ -35,9 +35,12 @@ poethepoet = "^0.24.3"
 coverage = {extras = ["toml"], version = "^7.3.2"}
 types-requests = "2.31.0.1"
 
+
 [[tool.poetry.source]]
-name = "PyPI"
-priority = "primary"
+name = "test-pypi"
+url = "https://test.pypi.org/simple/"
+priority = "supplemental"
+
 
 [tool.poe.tasks]
 black = "black --check ./"
