@@ -3,17 +3,19 @@ from embeddings.config.lighting_config_space import LightingTextClassificationCo
 from embeddings.pipeline.lightning_hps_pipeline import OptimizedLightingClassificationPipeline
 from embeddings.utils.utils import build_output_path
 
-from klajster.logging import get_hps_run_name
-from klajster.paths import (
-    HPS_COMMON_CFG_PATH,
-    LIGHTNING_HPS_OUTPUT_PATH,
-    get_dataset_config_path,
-    get_embedding_name_by_path,
+from klajster.paths import HPS_COMMON_CFG_PATH, LIGHTNING_HPS_OUTPUT_PATH, get_dataset_config_path
+from klajster.utils import (
+    disable_hf_datasets_caching,
+    get_lightning_logging_config,
+    parse_dataset_cfg_for_evaluation,
+    read_yaml,
 )
-from klajster.setup import disable_hf_datasets_caching, get_lightning_logging_config
-from klajster.utils import parse_dataset_cfg_for_evaluation, read_yaml
 
 app = typer.Typer()
+
+
+def get_hps_run_name(embedding_path: str, dataset: str) -> str:
+    return f"hps_{dataset}_{embedding_path}"
 
 
 def run(
@@ -26,7 +28,7 @@ def run(
 
     early_stopping_kwargs = config["early_stopping_kwargs"]
     hps_config = config["classification"]
-    hps_config["embedding_name_or_path"] = get_embedding_name_by_path(embedding_path)
+    hps_config["embedding_name_or_path"] = embedding_path.replace("__", "/")
     hps_config_common = read_yaml(HPS_COMMON_CFG_PATH)
     config_space = LightingTextClassificationConfigSpace.from_dict(hps_config)
 
@@ -39,6 +41,7 @@ def run(
     output_path = build_output_path(
         LIGHTNING_HPS_OUTPUT_PATH, embedding_path, dataset_name, timestamp_subdir=False, mkdirs=True
     )
+
     logging_config = get_lightning_logging_config(dataset_name)
     optimized_pipeline = OptimizedLightingClassificationPipeline(
         config_space=config_space,  # type: ignore

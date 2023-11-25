@@ -9,42 +9,25 @@ stages:
       - experiments/scripts/preprocess_dataset.py
     outs:
       - data/datasets/polemo2/lightning/
-  polemo2_preprocess_dataset_hps:
-    cmd: PYTHONPATH=. python3 experiments/scripts/preprocess_dataset.py --ds polemo2 --cfg-type lightning --is-hps
-    params:
-      - experiments/configs/datasets/polemo2.yaml:
-          - common_args
-          - datasets.lightning_hps
+  polemo2_lightning_classification:
+    matrix:
+      embedding: [ allegro__herbert-base-cased, allegro__herbert-large-cased ]
+      num_devices: [ 1, 2, 3 ]
+    cmd: >-
+      PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py 
+      --ds polemo2 
+      --embedding-path ${item.embedding} 
+      --pipeline-params-path experiments/configs/eval/polemo2/${item.embedding}.yaml
+      --output-path data/models/lightning/${item.embedding}/polemo2/gpu-count-${item.num_devices}
+      --devices ${item.num_devices}
+      --accelerator gpu
+      --retrains 1
     deps:
-      - experiments/scripts/preprocess_dataset.py
+      - experiments/scripts/evaluate_lightning_classification.py
       - data/datasets/polemo2/lightning
+      - experiments/configs/eval/polemo2/${item.embedding}.yaml
     outs:
-      - data/datasets/polemo2/lightning_hps/
-  lightning_hps_polemo2:
-    foreach:
-      - allegro__herbert-base-cased
-      - allegro__herbert-large-cased
-    do:
-      cmd: PYTHONPATH=. python3 experiments/scripts/optimize_lightning_classification.py --ds polemo2 --embedding-path ${item} --hps-config-path experiments/configs/hps/lightning_seq_512.yaml
-      deps:
-        - experiments/configs/hps/lightning_seq_512.yaml
-        - experiments/scripts/optimize_lightning_classification.py
-        - data/datasets/polemo2/lightning_hps/
-      outs:
-        - data/hps/lightning/${item}/polemo2/best_params.yaml
-        - data/hps/lightning/${item}/polemo2/hps_log.pickle
-  lightning_polemo2:
-    foreach:
-      - allegro__herbert-base-cased
-      - allegro__herbert-large-cased
-    do:
-      cmd: PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py --ds polemo2 --embedding-path ${item} --retrains 5
-      deps:
-        - experiments/scripts/evaluate_lightning_classification.py
-        - data/datasets/polemo2/lightning
-        - data/hps/lightning/${item}/polemo2/best_params.yaml
-      outs:
-        - data/models/lightning/${item}/polemo2/
+      - data/models/lightning/${item.embedding}/polemo2/gpu-count-${item.num_devices}
 
   train_retnet:
     wdir: ./RetNet

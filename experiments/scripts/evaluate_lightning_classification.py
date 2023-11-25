@@ -1,30 +1,50 @@
 from copy import deepcopy
+from pathlib import Path
+from typing import Dict, Union
 
 import typer
-import wandb
 from embeddings.pipeline.lightning_classification import LightningClassificationPipeline
-from embeddings.utils.utils import build_output_path
 from tqdm.auto import tqdm
 
-from klajster.defaults import get_model_checkpoint_kwargs
-from klajster.logging import get_task_run_name
-from klajster.paths import (
-    LIGHTNING_PIPELINE_OUTPUT_PATH,
-    get_dataset_config_path,
-    get_lightning_optimized_pipeline_params_path,
+from klajster.paths import LIGHTNING_HPS_OUTPUT_PATH, get_dataset_config_path
+from klajster.utils import (
+    disable_hf_datasets_caching,
+    get_lightning_logging_config,
+    parse_dataset_cfg_for_evaluation,
+    read_yaml,
 )
-from klajster.setup import disable_hf_datasets_caching, get_lightning_logging_config
-from klajster.utils import parse_dataset_cfg_for_evaluation, read_yaml
 
 app = typer.Typer()
+
+
+def get_task_run_name(embedding_path: str, dataset: str, run_id: int) -> str:
+    return f"{dataset}_{embedding_path}_run_{run_id}"
+
+
+def get_model_checkpoint_kwargs() -> Dict[str, Union[str, None, bool]]:
+    return {
+        "filename": "last",
+        "monitor": None,
+        "save_last": False,
+    }
 
 
 def run(
     embedding_path: str = typer.Option("...", help="Embedding path."),
     ds: str = typer.Option("...", help="Dataset name."),
-    retrains: int = typer.Option("...", help="Number of model retrains."),
+    pipeline_params_path: Path = typer.Option(
+        "...",
+        help="Path to pipeline parameters config. If `None` the script will try to read the parameters configuration from a default HPS location",
+    ),
+    output_path: Path = typer.Option("...", help="Output path for model results."),
+    devices: str = typer.Option("...", help="Number of GPUs."),
+    accelerator: str = typer.Option("...", help="Accelerator type."),
+    retrains: int = typer.Option(1, help="Number of model retrains."),
+    wandb_entity: str = typer.Option("graph-ml-lab-wust", help="WandB entity."),
+    tracking_project_name: str = typer.Option("klajster", help="WandB project name."),
 ) -> None:
     disable_hf_datasets_caching()
+    output_path.mkdir(exist_ok=True, parents=True)
 
     (
         dataset_name,
@@ -32,40 +52,32 @@ def run(
         input_column_name,
         target_column_name,
     ) = parse_dataset_cfg_for_evaluation(str(get_dataset_config_path(ds)), cfg_type="lightning")
-    cfg = read_yaml(
-        get_lightning_optimized_pipeline_params_path(
-            embedding_path=embedding_path, dataset_name=ds
-        ),
-        safe_load=False,
-    )
-    output_path = build_output_path(
-        LIGHTNING_PIPELINE_OUTPUT_PATH,
-        embedding_path,
-        dataset_name,
-        timestamp_subdir=False,
-        mkdirs=True,
-    )
 
+    if pipeline_params_path is None:  # HPS
+        pipeline_params_path = LIGHTNING_HPS_OUTPUT_PATH / embedding_path / ds / "best_params.yaml"
+        assert pipeline_params_path.is_file()
+
+    cfg = read_yaml(pipeline_params_path, safe_load=False)
     cfg["dataset_name_or_path"] = dataset_path
     cfg["output_path"] = output_path
-    cfg["logging_config"] = get_lightning_logging_config(dataset_name)
+    cfg["logging_config"] = get_lightning_logging_config(
+        tracking_project_name=tracking_project_name, wandb_entity=wandb_entity
+    )
     cfg["model_checkpoint_kwargs"] = get_model_checkpoint_kwargs()
+    cfg["devices"] = devices
+    cfg["accelerator"] = accelerator
 
     for run_id in tqdm(range(retrains), desc="Run"):
         run_cfg = deepcopy(cfg)
         run_output_path = output_path / f"run-{run_id}"
-        run_output_path.mkdir(parents=False, exist_ok=False)
+        run_output_path.mkdir(parents=False, exist_ok=True)
         run_cfg["output_path"] = run_output_path
         pipeline = LightningClassificationPipeline(**run_cfg)
         run_name = get_task_run_name(
             dataset=dataset_name, embedding_path=embedding_path, run_id=run_id
         )
         pipeline.run(run_name=run_name)
-        wandb.restore(
-            name="config.yaml",
-            run_path=pipeline.model.task.trainer.logger[0]._experiment.path,  # type: ignore
-            root=str(run_output_path),
-        )
 
 
-typer.run(run)
+if __name__ == "__main__":
+    typer.run(run)

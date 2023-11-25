@@ -1,13 +1,10 @@
 import importlib
-import json
-import os.path
 from pathlib import Path
-from typing import Any, Dict, Sequence, Tuple, Type, Union
+from typing import Any, Sequence, Tuple, Type, Union
 
 import yaml
-from pygments import highlight  # type: ignore
-from pygments.formatters.terminal256 import Terminal256Formatter  # type: ignore
-from pygments.lexers.data import JsonLexer  # type: ignore
+from datasets import disable_caching
+from embeddings.utils.loggers import LightningLoggingConfig
 from yaml.loader import Loader
 
 
@@ -35,22 +32,6 @@ def get_create_eval_paths(
     return str(persist_out_path), str(output_path)
 
 
-def prepare_output_path(path: str) -> Path:
-    output_dir = Path(os.path.dirname(path))
-    output_dir.mkdir(parents=True, exist_ok=True)
-    return Path(path)
-
-
-def pprint_dict(dictionary: Dict[str, float]) -> None:
-    raw_json = json.dumps(dictionary, indent=2)
-    colorful = highlight(
-        raw_json,
-        lexer=JsonLexer(),
-        formatter=Terminal256Formatter(),
-    )
-    print(colorful)
-
-
 def parse_dataset_cfg_for_evaluation(
     dataset_cfg_path: str, cfg_type: str
 ) -> Tuple[str, str, Union[str, Sequence[str]], str]:
@@ -60,4 +41,22 @@ def parse_dataset_cfg_for_evaluation(
         ds_cfg["paths"][cfg_type],
         ds_cfg["common_args"]["input_column_names"],
         ds_cfg["common_args"]["target_column_name"],
+    )
+
+
+def disable_hf_datasets_caching() -> None:
+    # Disable generation of datasets cache files
+    disable_caching()  # type: ignore
+
+
+def get_lightning_logging_config(
+    tracking_project_name: str = "klajster",
+    wandb_entity: str = "graph-ml-lab-wust",
+    wandb_run_id: str | None = None,
+) -> LightningLoggingConfig:
+    return LightningLoggingConfig(
+        loggers_names=["wandb"],
+        tracking_project_name=tracking_project_name,
+        wandb_entity=wandb_entity,
+        wandb_run_id=wandb_run_id,
     )
