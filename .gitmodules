@@ -1,0 +1,4 @@
+[submodule "RetNet"]
+	path = RetNet
+	url = git@github.com:CLARIN-PL/RetNet.git
+	branch = train-on-pl-corpus
