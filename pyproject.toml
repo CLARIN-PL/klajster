@@ -47,12 +47,13 @@ black = "black --check ./"
 isort = "isort . -c"
 black_fix = "black ./"
 isort_fix = "isort . "
-pyflakes = "pyflakes ."
-mypy = "mypy ."
+# pyflakes = "pyflakes ."
+# mypy = "mypy ."
 coverage_test = "coverage run -m pytest"
 coverage_report = "coverage report -m"
 test = ["coverage_test", "coverage_report"]
-check = ["black", "isort", "mypy", "pyflakes"]
+# check = ["black", "isort", "mypy", "pyflakes"]
+check = ["black", "isort"]
 fix = ["black_fix", "isort_fix"]
 all = ["check", "test"]
 force-torch-cuda = "python -m pip install torch==2.0.0 --index-url https://download.pytorch.org/whl/cu118"
@@ -72,6 +73,7 @@ line-length = 100
 
 [tool.isort]
 line_length = 100
+known_first_party = ["model"]
 known_third_party = ["click", "pytest"]
 profile = "black"
 

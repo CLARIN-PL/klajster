@@ -1,0 +1,16 @@
+# clarinpl-embeddings==0.0.1a68769233311344
+# torch==2.0.0
+git+https://github.com/CLARIN-PL/embeddings.git@chore/bump-torch-version
+transformers==4.35.1
+annoy==1.17.3
+dvc[s3]==3.29.0
+datasets==2.14.7
+wandb==0.16.0
+lightning==2.0.1
+scipy==1.9.3
+scikit-learn==1.2.2
+optuna==3.4.0
+srsly==2.4.8
+evaluate==0.4.1
+seqeval==1.2.2
+sacremoses==0.1.1

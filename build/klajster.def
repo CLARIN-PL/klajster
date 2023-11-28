@@ -1,0 +1,11 @@
+Bootstrap: localimage
+From: lumi-pytorch-rocm-5.5.1-python-3.10-pytorch-v2.0.1.sif
+
+%files 
+    ../requirements.txt 
+
+%post
+    ln -s /usr/bin/gcc-10 /usr/bin/gcc
+    ln -s /usr/bin/g++-10 /usr/bin/g++
+    $WITH_CONDA
+    pip install -r requirements.txt
