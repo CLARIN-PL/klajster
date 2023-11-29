@@ -1,5 +1,3 @@
-export MPICH_GPU_SUPPORT_ENABLED=1
-
 srun \
   -t 0:10:0 \
   -N $NODES \
