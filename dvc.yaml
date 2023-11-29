@@ -1,33 +1,82 @@
 stages:
-  polemo2_preprocess_dataset:
-    cmd: PYTHONPATH=. python3 experiments/scripts/preprocess_dataset.py --ds polemo2 --cfg-type lightning
+  preprocess_dataset:
+    matrix:
+      dataset: [
+        "polemo2"
+      ]
+    cmd: >-
+      PYTHONPATH=. python3 experiments/scripts/preprocess_dataset.py 
+      --ds ${item.dataset} 
+      --cfg-type lightning
     params:
-      - experiments/configs/datasets/polemo2.yaml:
+      - experiments/configs/datasets/${item.dataset}.yaml:
           - common_args
           - datasets.lightning
     deps:
       - experiments/scripts/preprocess_dataset.py
     outs:
-      - data/datasets/polemo2/lightning/
-  polemo2_lightning_classification:
+      - data/datasets/${item.dataset}/
+
+  run_nvidia_benchmark:
     matrix:
-      embedding: [ allegro__herbert-base-cased, allegro__herbert-large-cased ]
-      num_devices: [ 1, 2, 3 ]
+      dataset: [
+        "polemo2"
+      ]
+      embedding: [
+        "allegro__herbert-base-cased",
+        # "allegro__herbert-large-cased",
+      ]
+      num_gpus: [ 1, 2, 3, 4 ]
     cmd: >-
       PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py 
-      --ds polemo2 
+      --ds ${item.dataset}
       --embedding-path ${item.embedding} 
-      --pipeline-params-path experiments/configs/eval/polemo2/${item.embedding}.yaml
-      --output-path data/models/lightning/${item.embedding}/polemo2/gpu-count-${item.num_devices}
-      --devices ${item.num_devices}
+      --pipeline-params-path experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
+      --output-path data/benchmark/nvidia_${item.embedding}_${item.dataset}_num-gpus-${item.num_gpus}
+      --num-nodes 1
+      --devices ${item.num_gpus}
       --accelerator gpu
       --retrains 1
     deps:
       - experiments/scripts/evaluate_lightning_classification.py
-      - data/datasets/polemo2/lightning
-      - experiments/configs/eval/polemo2/${item.embedding}.yaml
+      - data/datasets/${item.dataset}/
+      - experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
     outs:
-      - data/models/lightning/${item.embedding}/polemo2/gpu-count-${item.num_devices}
+      - data/benchmark/nvidia_${item.embedding}_${item.dataset}_num-gpus-${item.num_gpus}
+
+  run_amd_benchmark:
+    matrix:
+      dataset: [
+        "polemo2"
+      ]
+      embedding: [
+        "allegro__herbert-base-cased",
+        # "allegro__herbert-large-cased",
+      ]
+      device_cfg: [
+        {"num_nodes": 1, "num_gpus": 1},
+        {"num_nodes": 1, "num_gpus": 2},
+        {"num_nodes": 1, "num_gpus": 3},
+        {"num_nodes": 1, "num_gpus": 8},
+        {"num_nodes": 2, "num_gpus": 8},
+        {"num_nodes": 4, "num_gpus": 8},
+      ]
+    cmd: >-
+      PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py 
+      --ds ${item.dataset}
+      --embedding-path ${item.embedding} 
+      --pipeline-params-path experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
+      --output-path data/benchmark/amd_${item.embedding}_${item.dataset}_num-nodes-${item.device_cfg.num_nodes}_num-gpus-${item.device_cfg.num_gpus}
+      --num-nodes ${item.device_cfg.num_nodes}
+      --devices ${item.device_cfg.num_gpus}
+      --accelerator gpu
+      --retrains 1
+    deps:
+      - experiments/scripts/evaluate_lightning_classification.py
+      - data/datasets/${item.dataset}/
+      - experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
+    outs:
+      - data/benchmark/amd_${item.embedding}_${item.dataset}_num-nodes-${item.device_cfg.num_nodes}_num-gpus-${item.device_cfg.num_gpus}
 
   train_retnet:
     wdir: ./RetNet

@@ -37,6 +37,7 @@ def run(
         help="Path to pipeline parameters config. If `None` the script will try to read the parameters configuration from a default HPS location",
     ),
     output_path: Path = typer.Option("...", help="Output path for model results."),
+    num_nodes: str = typer.Option("...", help="Number of compute nodes."),
     devices: str = typer.Option("...", help="Number of GPUs."),
     accelerator: str = typer.Option("...", help="Accelerator type."),
     retrains: int = typer.Option(1, help="Number of model retrains."),
@@ -64,6 +65,7 @@ def run(
         tracking_project_name=tracking_project_name, wandb_entity=wandb_entity
     )
     cfg["model_checkpoint_kwargs"] = get_model_checkpoint_kwargs()
+    cfg["num_nodes"] = num_nodes
     cfg["devices"] = devices
     cfg["accelerator"] = accelerator
 

@@ -1,0 +1,38 @@
+schema: '2.0'
+stages:
+  preprocess_dataset@polemo2:
+    cmd: PYTHONPATH=. python3 experiments/scripts/preprocess_dataset.py  --ds polemo2  --cfg-type
+      lightning
+    deps:
+    - path: experiments/scripts/preprocess_dataset.py
+      hash: md5
+      md5: 343edba64caaa1b105d6bcfa8fdf3cce
+      size: 1206
+    params:
+      experiments/configs/datasets/polemo2.yaml:
+        common_args:
+          dataset_name: clarin-pl/polemo2-official
+          input_column_names: text
+          target_column_name: target
+          sample_missing_splits:
+          sample_missing_splits_hps:
+          downsample_splits:
+          load_dataset_kwargs:
+          seed: 441
+          encode_labels: false
+        datasets.lightning:
+          pipeline_cls: embeddings.pipeline.hf_preprocessing_pipeline.HuggingFacePreprocessingPipeline
+          pipeline_args:
+            dataset_name: clarin-pl/polemo2-official
+            sample_missing_splits:
+            ignore_test_subset: false
+            load_dataset_kwargs:
+            seed: 441
+            downsample_splits:
+          output: data/datasets/polemo2/lightning/
+    outs:
+    - path: data/datasets/polemo2/
+      hash: md5
+      md5: f46fbd0f6c62feb4a09f5681d0a96949.dir
+      size: 6617538
+      nfiles: 10
