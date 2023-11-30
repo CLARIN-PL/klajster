@@ -19,8 +19,8 @@ from klajster.utils import (
 app = typer.Typer()
 
 
-def get_task_run_name(embedding_path: str, dataset: str, run_id: int) -> str:
-    return f"{dataset}_{embedding_path}_run_{run_id}"
+def get_task_run_name(embedding_path: str, dataset: str, devices: int, run_id: int) -> str:
+    return f"{dataset}_{embedding_path}_devices_{devices}_run_{run_id}"
 
 
 def get_model_checkpoint_kwargs() -> Dict[str, Union[str, None, bool]]:
@@ -87,7 +87,7 @@ def run(
         run_cfg["output_path"] = run_output_path
         pipeline = LightningClassificationPipeline(**run_cfg)
         run_name = get_task_run_name(
-            dataset=dataset_name, embedding_path=embedding_path, run_id=run_id
+            dataset=dataset_name, embedding_path=embedding_path, devices=devices, run_id=run_id
         )
         start = time.time()
         pipeline.run(run_name=run_name)
