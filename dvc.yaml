@@ -34,7 +34,7 @@ stages:
       ]
       num_gpus: [ 1, 2, 4 ]
     cmd: >-
-      PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py 
+      NCCL_P2P_DISABLE=1 PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py 
       --ds ${item.dataset}
       --embedding-path ${item.embedding} 
       --pipeline-params-path experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
