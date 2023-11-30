@@ -12,12 +12,16 @@ common_args:
     encode_labels: &encode_labels False
 
 paths:
-    lightning: &lightning_ds_path data/datasets/polemo2/lightning/
-    lightning_hps: &lightning_hps_ds_path data/datasets/polemo2/lightning_hps/
+    lightning:
+        nvidia: &lightning_nvidia_ds_path data/datasets/polemo2/lightning_nvidia/
+        amd: &lightning_amd_ds_path data/datasets/polemo2/lightning_amd/
+    lightning_hps:
+        nvidia: &lightning_nvidia_hps_ds_path data/datasets/polemo2/lightning_nvidia_hps/
+        amd: &lightning_amd_hps_ds_path data/datasets/polemo2/lightning_amd_hps/
 
 datasets:
 
-    lightning:
+    lightning_nvidia:
         pipeline_cls: embeddings.pipeline.hf_preprocessing_pipeline.HuggingFacePreprocessingPipeline
         pipeline_args:
             dataset_name: *dataset_name
@@ -26,14 +30,35 @@ datasets:
             load_dataset_kwargs: *load_dataset_kwargs
             seed: *seed
             downsample_splits: *downsample_splits
-        output: *lightning_ds_path
+        output: *lightning_nvidia_ds_path
 
-    lightning_hps:
+    lightning_nvidia_hps:
         pipeline_cls: embeddings.pipeline.hf_preprocessing_pipeline.HuggingFacePreprocessingPipeline
         pipeline_args:
-            dataset_name: *lightning_ds_path
+            dataset_name: *lightning_nvidia_ds_path
             sample_missing_splits:  *sample_missing_splits_hps
             ignore_test_subset: True
             load_dataset_kwargs: *load_dataset_kwargs
             seed: *seed
-        output:  *lightning_hps_ds_path
+        output:  *lightning_nvidia_hps_ds_path
+
+    lightning_amd:
+        pipeline_cls: embeddings.pipeline.hf_preprocessing_pipeline.HuggingFacePreprocessingPipeline
+        pipeline_args:
+            dataset_name: *dataset_name
+            sample_missing_splits: *sample_missing_splits
+            ignore_test_subset: False
+            load_dataset_kwargs: *load_dataset_kwargs
+            seed: *seed
+            downsample_splits: *downsample_splits
+        output: *lightning_amd_ds_path
+
+    lightning_amd_hps:
+        pipeline_cls: embeddings.pipeline.hf_preprocessing_pipeline.HuggingFacePreprocessingPipeline
+        pipeline_args:
+            dataset_name: *lightning_amd_ds_path
+            sample_missing_splits: *sample_missing_splits_hps
+            ignore_test_subset: True
+            load_dataset_kwargs: *load_dataset_kwargs
+            seed: *seed
+        output: *lightning_amd_hps_ds_path

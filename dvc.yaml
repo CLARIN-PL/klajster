@@ -1,5 +1,21 @@
 stages:
-  preprocess_dataset:
+  preprocess_dataset_for_nvidia:
+    matrix:
+      dataset: [ "polemo2" ]
+    cmd: >-
+      PYTHONPATH=. python3 experiments/scripts/preprocess_dataset.py 
+      --ds polemo2 
+      --cfg-type lightning_nvidia
+    params:
+      - experiments/configs/datasets/${item.dataset}.yaml:
+          - common_args
+          - datasets.lightning_nvidia
+    deps:
+      - experiments/scripts/preprocess_dataset.py
+    outs:
+      - data/datasets/${item.dataset}/lightning_nvidia
+
+  preprocess_dataset_for_amd:
     matrix:
       dataset: [ "polemo2" ]
     cmd: >-
@@ -15,16 +31,16 @@ stages:
       cd /myrun;
       PYTHONPATH=. python experiments/scripts/preprocess_dataset.py 
       --ds ${item.dataset} 
-      --cfg-type lightning
+      --cfg-type lightning_amd
       "
     params:
       - experiments/configs/datasets/${item.dataset}.yaml:
           - common_args
-          - datasets.lightning
+          - datasets.lightning_amd
     deps:
       - experiments/scripts/preprocess_dataset.py
     outs:
-      - data/datasets/${item.dataset}/
+      - data/datasets/${item.dataset}/lightning_amd
 
   run_nvidia_benchmark:
     matrix:
@@ -39,13 +55,14 @@ stages:
       --embedding-path ${item.embedding} 
       --pipeline-params-path experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
       --output-path data/benchmark/nvidia_${item.embedding}_${item.dataset}_num-gpus-${item.num_gpus}
+      --gpu-type nvidia
       --num-nodes 1
       --devices ${item.num_gpus}
       --accelerator gpu
       --retrains 1
     deps:
       - experiments/scripts/evaluate_lightning_classification.py
-      - data/datasets/${item.dataset}/
+      - data/datasets/${item.dataset}/lightning_nvidia
       - experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
     outs:
       - data/benchmark/nvidia_${item.embedding}_${item.dataset}_num-gpus-${item.num_gpus}
@@ -85,12 +102,13 @@ stages:
       --output-path data/benchmark/amd_${item.embedding}_${item.dataset}_num-nodes-${item.device_cfg.num_nodes}_num-gpus-${item.device_cfg.num_gpus}
       --num-nodes ${item.device_cfg.num_nodes}
       --devices ${item.device_cfg.num_gpus}
+      --gpu-type amd
       --accelerator gpu
       --retrains 1
       "
     deps:
       - experiments/scripts/evaluate_lightning_classification.py
-      - data/datasets/${item.dataset}/
+      - data/datasets/${item.dataset}/lightning_amd
       - experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
     outs:
       - data/benchmark/amd_${item.embedding}_${item.dataset}_num-nodes-${item.device_cfg.num_nodes}_num-gpus-${item.device_cfg.num_gpus}

@@ -19,8 +19,10 @@ from klajster.utils import (
 app = typer.Typer()
 
 
-def get_task_run_name(embedding_path: str, dataset: str, devices: int, run_id: int) -> str:
-    return f"{dataset}_{embedding_path}_devices_{devices}_run_{run_id}"
+def get_task_run_name(
+    embedding_path: str, dataset: str, gpu_type: str, devices: int, run_id: int
+) -> str:
+    return f"{dataset}_{embedding_path}_gpu_{gpu_type}_devices_{devices}_run_{run_id}"
 
 
 def get_model_checkpoint_kwargs() -> Dict[str, Union[str, None, bool]]:
@@ -48,6 +50,7 @@ def run(
         help="Path to pipeline parameters config. If `None` the script will try to read the parameters configuration from a default HPS location",
     ),
     output_path: Path = typer.Option("...", help="Output path for model results."),
+    gpu_type: str = typer.Option(..., help="GPU type (nvidia, amd)."),
     num_nodes: int = typer.Option("...", help="Number of compute nodes."),
     devices: int = typer.Option("...", help="Number of GPUs."),
     accelerator: str = typer.Option("...", help="Accelerator type."),
@@ -63,7 +66,9 @@ def run(
         dataset_path,
         input_column_name,
         target_column_name,
-    ) = parse_dataset_cfg_for_evaluation(str(get_dataset_config_path(ds)), cfg_type="lightning")
+    ) = parse_dataset_cfg_for_evaluation(
+        str(get_dataset_config_path(ds)), cfg_type="lightning", gpu_type=gpu_type
+    )
 
     if pipeline_params_path is None:  # HPS
         pipeline_params_path = LIGHTNING_HPS_OUTPUT_PATH / embedding_path / ds / "best_params.yaml"
@@ -87,7 +92,11 @@ def run(
         run_cfg["output_path"] = run_output_path
         pipeline = LightningClassificationPipeline(**run_cfg)
         run_name = get_task_run_name(
-            dataset=dataset_name, embedding_path=embedding_path, devices=devices, run_id=run_id
+            dataset=dataset_name,
+            embedding_path=embedding_path,
+            gpu_type=gpu_type,
+            devices=devices,
+            run_id=run_id,
         )
         start = time.time()
         pipeline.run(run_name=run_name)
