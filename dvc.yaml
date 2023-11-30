@@ -129,7 +129,7 @@ stages:
       --ntasks-per-node ${item.device_cfg.num_gpus} 
       --gpus $((${item.device_cfg.num_gpus}*${item.device_cfg.num_nodes}))
       singularity exec 
-      -B $(pwd):/myrun 
+      -B $(pwd)/..:/myrun 
       /project/project_465000858/klajster.sif 
       bash -c "
       \$WITH_CONDA;
@@ -140,7 +140,7 @@ stages:
       --output_dir ../data/retnet
       --learning_rate 6e-4 
       --weight_decay 0.01 
-      --max_steps 1000
+      --max_steps 20000
       --logging_steps 12
       --eval_steps 1000 
       --save_steps 1000
