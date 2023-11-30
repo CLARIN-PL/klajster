@@ -16,3 +16,5 @@ seqeval==1.2.2
 sacremoses==0.1.1
 
 uvicorn==0.24.0
+timm==0.9.12
+accelerate==0.24.1

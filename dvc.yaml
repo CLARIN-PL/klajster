@@ -117,24 +117,41 @@ stages:
 
   train_retnet:
     wdir: ./RetNet
+    device_cfg: [
+        {"num_nodes": 2, "num_gpus": 8},
+      ]
     cmd: >-
-      torchrun --nproc_per_node=3 
-      train.py
-      --model_size 300m
-      --output_dir ../data/models/retnet/checkpoints
-      --do_train 
-      --do_eval
-      --prediction_loss_only
-      --remove_unused_columns False
-      --learning_rate 6e-4
-      --weight_decay 0.01
+      export SINGULARITY_BIND=;
+      srun 
+      -t 24:00:00
+      -N ${item.device_cfg.num_nodes}
+      --account=project_465000858
+      --partition=standard-g
+      --ntasks-per-node ${item.device_cfg.num_gpus} 
+      --gpus $((${item.device_cfg.num_gpus}*${item.device_cfg.num_nodes}))
+      singularity exec 
+      -B $(pwd)/..:/myrun 
+      /project/project_465000858/klajster.sif 
+      bash -c "
+      \$WITH_CONDA;
+      cd /myrun;
+      source setup_envs.sh;
+      PYTHONPATH=. python train.py
+      --model_size 300m                                                                           
+      --output_dir ../data/retnet
+      --learning_rate 6e-4 
+      --weight_decay 0.01 
       --max_steps 20000
-      --logging_steps 100
+      --logging_steps 12
       --eval_steps 1000 
-      --save_steps 1000 
-      --per_device_train_batch_size 4
-      --per_device_eval_batch_size 4
+      --save_steps 1000
+      --per_device_train_batch_size 32
+      --per_device_eval_batch_size 32
+      --dataset_sample 0.1
+      --num_nodes ${item.device_cfg.num_nodes}
+      --devices ${item.device_cfg.num_gpus}
+      "
     deps:
       - train.py
     outs:
-      - ../data/models/retnet/checkpoints
+      - ../data/retnet
