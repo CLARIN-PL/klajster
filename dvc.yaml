@@ -141,19 +141,18 @@ stages:
       cd /myrun;
       source setup_envs.sh;
       PYTHONPATH=. python RetNet/train.py
-      --model_size 300m                                                                           
-      --output_dir data/retnet
-      --learning_rate 6e-4 
-      --weight_decay 0.01 
-      --max_steps 20000
-      --logging_steps 12
-      --eval_steps 1000 
-      --save_steps 1000
-      --per_device_train_batch_size 32
-      --per_device_eval_batch_size 32
-      --dataset_sample 0.1
-      --num_nodes ${item.device_cfg.num_nodes}
       --devices ${item.device_cfg.num_gpus}
+      --num-nodes ${item.device_cfg.num_nodes}
+      --output-dir data/retnet
+      --dataset-sample 0.1
+      --test-size 0.1
+      --model-size 300m      
+      --max-length 4096
+      --learning-rate 6e-4 
+      --weight-decay 0.01 
+      --max-steps 20000
+      --batch-size 16
+      --num-workers 4
       "
     deps:
       - RetNet/train.py
