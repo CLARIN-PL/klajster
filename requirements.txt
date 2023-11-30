@@ -1,6 +1,6 @@
 # clarinpl-embeddings==0.0.1a68769233311344
 # torch==2.0.0
-git+https://github.com/CLARIN-PL/embeddings.git@fix/multi-gpu-preds
+git+https://github.com/CLARIN-PL/embeddings.git@fix/multi-gpu-training
 transformers==4.35.1
 annoy==1.17.3
 dvc[s3]==3.29.0
