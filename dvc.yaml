@@ -121,6 +121,7 @@ stages:
         {"num_nodes": 2, "num_gpus": 8},
       ]
     cmd: >-
+      export SINGULARITY_BIND=;
       srun 
       -t 24:00:00
       -N ${item.device_cfg.num_nodes}
