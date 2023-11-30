@@ -125,6 +125,7 @@ stages:
     cmd: >-
       MYMASKS="0xfe000000000000,0xfe00000000000000,0xfe0000,0xfe000000,0xfe,0xfe00,0xfe00000000,0xfe0000000000";
       export SINGULARITY_BIND=;
+      export HF_DATASETS_CACHE="/myrun/.cache/hf";
       srun 
       -t 24:00:00
       -N ${item.device_cfg.num_nodes}
@@ -140,10 +141,11 @@ stages:
       \$WITH_CONDA;
       cd /myrun;
       source setup_envs.sh;
-      PYTHONPATH=. python RetNet/train.py
+      cd RetNet;
+      PYTHONPATH=. python train.py
       --devices ${item.device_cfg.num_gpus}
       --num-nodes ${item.device_cfg.num_nodes}
-      --output-dir data/retnet
+      --output-dir ../data/retnet
       --dataset-sample 0.1
       --test-size 0.1
       --model-size 300m      
@@ -157,4 +159,4 @@ stages:
     deps:
       - RetNet/train.py
     outs:
-      - data/retnet
+      - .../data/retnet

@@ -52,11 +52,9 @@ def disable_hf_datasets_caching() -> None:
 def get_lightning_logging_config(
     tracking_project_name: str = "klajster",
     wandb_entity: str = "graph-ml-lab-wust",
-    wandb_run_id: str | None = None,
 ) -> LightningLoggingConfig:
     return LightningLoggingConfig(
         loggers_names=["wandb"],
         tracking_project_name=tracking_project_name,
         wandb_entity=wandb_entity,
-        wandb_run_id=wandb_run_id,
     )
