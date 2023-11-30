@@ -1,119 +1,99 @@
 stages:
   preprocess_dataset:
-    foreach:
-      - dataset: "polemo2"
-    do:
-      cmd: >-
-        srun 
-        -N 1
-        --partition=dev-g
-        --account=project_465000858
-        singularity exec 
-        -B $(pwd):/myrun 
-        /project/project_465000858/klajster.sif 
-        bash -c "
-        \$WITH_CONDA;
-        cd /myrun;
-        PYTHONPATH=. python experiments/scripts/preprocess_dataset.py 
-        --ds ${item.dataset} 
-        --cfg-type lightning
-        "
-      params:
-        - experiments/configs/datasets/${item.dataset}.yaml:
-            - common_args
-            - datasets.lightning
-      deps:
-        - experiments/scripts/preprocess_dataset.py
-      outs:
-        - data/datasets/${item.dataset}/
+    matrix:
+      dataset: [ "polemo2" ]
+    cmd: >-
+      srun 
+      -N 1
+      --partition=dev-g
+      --account=project_465000858
+      singularity exec 
+      -B $(pwd):/myrun 
+      /project/project_465000858/klajster.sif 
+      bash -c "
+      \$WITH_CONDA;
+      cd /myrun;
+      PYTHONPATH=. python experiments/scripts/preprocess_dataset.py 
+      --ds ${item.dataset} 
+      --cfg-type lightning
+      "
+    params:
+      - experiments/configs/datasets/${item.dataset}.yaml:
+          - common_args
+          - datasets.lightning
+    deps:
+      - experiments/scripts/preprocess_dataset.py
+    outs:
+      - data/datasets/${item.dataset}/
 
   run_nvidia_benchmark:
-    foreach:
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 1
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 2
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 4
-    do:
-      cmd: >-
-        PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py 
-        --ds ${item.dataset}
-        --embedding-path ${item.embedding} 
-        --pipeline-params-path experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
-        --output-path data/benchmark/nvidia_${item.embedding}_${item.dataset}_num-gpus-${item.num_gpus}
-        --num-nodes 1
-        --devices ${item.num_gpus}
-        --accelerator gpu
-        --retrains 1
-      deps:
-        - experiments/scripts/evaluate_lightning_classification.py
-        - data/datasets/${item.dataset}/
-        - experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
-      outs:
-        - data/benchmark/nvidia_${item.embedding}_${item.dataset}_num-gpus-${item.num_gpus}
+    matrix:
+      dataset: [ "polemo2" ]
+      embedding: [
+        "allegro__herbert-base-cased",
+      ]
+      num_gpus: [ 1, 2, 4 ]
+    cmd: >-
+      PYTHONPATH=. python3 experiments/scripts/evaluate_lightning_classification.py 
+      --ds ${item.dataset}
+      --embedding-path ${item.embedding} 
+      --pipeline-params-path experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
+      --output-path data/benchmark/nvidia_${item.embedding}_${item.dataset}_num-gpus-${item.num_gpus}
+      --num-nodes 1
+      --devices ${item.num_gpus}
+      --accelerator gpu
+      --retrains 1
+    deps:
+      - experiments/scripts/evaluate_lightning_classification.py
+      - data/datasets/${item.dataset}/
+      - experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
+    outs:
+      - data/benchmark/nvidia_${item.embedding}_${item.dataset}_num-gpus-${item.num_gpus}
 
   run_amd_benchmark:
-    foreach:
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 1
-        num_nodes: 1
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 2
-        num_nodes: 1
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 4
-        num_nodes: 1
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 8
-        num_nodes: 1
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 8
-        num_nodes: 2
-      - dataset: "polemo2"
-        embedding: "allegro__herbert-base-cased"
-        num_gpus: 8
-        num_nodes: 3
-    do:
-      cmd: >-
-        srun 
-        -t 24:00:00
-        -N ${item.num_nodes}
-        --account=project_465000858
-        --partition=standard-g
-        --ntasks-per-node ${item.num_gpus} 
-        --gpus $((${item.num_gpus}*${item.num_nodes}))
-        singularity exec 
-        -B $(pwd):/myrun 
-        /project/project_465000858/klajster.sif 
-        bash -c "
-        \$WITH_CONDA;
-        cd /myrun;
-        source setup_envs.sh;
-        PYTHONPATH=. python experiments/scripts/evaluate_lightning_classification.py 
-        --ds ${item.dataset}
-        --embedding-path ${item.embedding} 
-        --pipeline-params-path experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
-        --output-path data/benchmark/amd_${item.embedding}_${item.dataset}_num-nodes-${item.num_nodes}_num-gpus-${item.num_gpus}
-        --num-nodes ${item.num_nodes}
-        --devices ${item.num_gpus}
-        --accelerator gpu
-        --retrains 1
-        "
-      deps:
-        - experiments/scripts/evaluate_lightning_classification.py
-        - data/datasets/${item.dataset}/
-        - experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
-      outs:
-        - data/benchmark/amd_${item.embedding}_${item.dataset}_num-nodes-${item.num_nodes}_num-gpus-${item.num_gpus}
+    matrix:
+      dataset: [ "polemo2" ]
+      embedding: [
+        "allegro__herbert-base-cased",
+      ]
+      device_cfg: [
+        {"num_nodes": 1, "num_gpus": 1},
+        {"num_nodes": 1, "num_gpus": 2},
+        {"num_nodes": 1, "num_gpus": 4},
+        {"num_nodes": 1, "num_gpus": 8},
+        {"num_nodes": 2, "num_gpus": 8},
+      ]
+    cmd: >-
+      srun 
+      -t 24:00:00
+      -N ${item.device_cfg.num_nodes}
+      --account=project_465000858
+      --partition=standard-g
+      --ntasks-per-node ${item.device_cfg.num_gpus} 
+      --gpus $((${item.device_cfg.num_gpus}*${item.device_cfg.num_nodes}))
+      singularity exec 
+      -B $(pwd):/myrun 
+      /project/project_465000858/klajster.sif 
+      bash -c "
+      \$WITH_CONDA;
+      cd /myrun;
+      source setup_envs.sh;
+      PYTHONPATH=. python experiments/scripts/evaluate_lightning_classification.py 
+      --ds ${item.dataset}
+      --embedding-path ${item.embedding}
+      --pipeline-params-path experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
+      --output-path data/benchmark/amd_${item.embedding}_${item.dataset}_num-nodes-${item.device_cfg.num_nodes}_num-gpus-${item.device_cfg.num_gpus}
+      --num-nodes ${item.device_cfg.num_nodes}
+      --devices ${item.device_cfg.num_gpus}
+      --accelerator gpu
+      --retrains 1
+      "
+    deps:
+      - experiments/scripts/evaluate_lightning_classification.py
+      - data/datasets/${item.dataset}/
+      - experiments/configs/eval/${item.dataset}/${item.embedding}.yaml
+    outs:
+      - data/benchmark/amd_${item.embedding}_${item.dataset}_num-nodes-${item.device_cfg.num_nodes}_num-gpus-${item.device_cfg.num_gpus}
 
   train_retnet:
     wdir: ./RetNet
