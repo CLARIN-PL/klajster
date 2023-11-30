@@ -82,12 +82,14 @@ stages:
         {"num_nodes": 2, "num_gpus": 8},
       ]
     cmd: >-
+      MYMASKS="0xfe000000000000,0xfe00000000000000,0xfe0000,0xfe000000,0xfe,0xfe00,0xfe00000000,0xfe0000000000";
       export SINGULARITY_BIND=;
       srun 
       -t 24:00:00
       -N ${item.device_cfg.num_nodes}
       --account=project_465000858
       --partition=standard-g
+      --cpu-bind=mask_cpu:$MYMASKS
       --ntasks-per-node ${item.device_cfg.num_gpus} 
       --gpus $((${item.device_cfg.num_gpus}*${item.device_cfg.num_nodes}))
       singularity exec 
