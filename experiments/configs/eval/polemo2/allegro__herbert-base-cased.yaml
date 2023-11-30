@@ -22,6 +22,7 @@ config: !!python/object:embeddings.config.lightning_config.LightningAdvancedConf
     weight_decay: 0.001
   task_train_kwargs:
     max_epochs: 3
+    profiler: pytorch
   tokenizer_kwargs: {}
 dataset_name_or_path: data/datasets/polemo2/lightning_hps/
 devices: gpu
