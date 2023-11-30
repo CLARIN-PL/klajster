@@ -123,16 +123,18 @@ stages:
         {"num_nodes": 2, "num_gpus": 8},
       ]
     cmd: >-
+      MYMASKS="0xfe000000000000,0xfe00000000000000,0xfe0000,0xfe000000,0xfe,0xfe00,0xfe00000000,0xfe0000000000";
       export SINGULARITY_BIND=;
       srun 
       -t 24:00:00
       -N ${item.device_cfg.num_nodes}
+      --cpu-bind=mask_cpu:$MYMASKS
       --account=project_465000858
       --partition=standard-g
       --ntasks-per-node ${item.device_cfg.num_gpus} 
       --gpus $((${item.device_cfg.num_gpus}*${item.device_cfg.num_nodes}))
       singularity exec 
-      -B $(pwd)/..:/myrun 
+      -B $(pwd)/:/myrun 
       /project/project_465000858/klajster.sif 
       bash -c "
       \$WITH_CONDA;
@@ -140,7 +142,7 @@ stages:
       source setup_envs.sh;
       PYTHONPATH=. python train.py
       --model_size 300m                                                                           
-      --output_dir ../data/retnet
+      --output_dir data/retnet
       --learning_rate 6e-4 
       --weight_decay 0.01 
       --max_steps 20000
@@ -156,4 +158,4 @@ stages:
     deps:
       - train.py
     outs:
-      - ../data/retnet
+      - data/retnet
