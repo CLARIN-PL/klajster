@@ -1,11 +1,12 @@
 schema: '2.0'
 stages:
-  preprocess_dataset@polemo2:
-    cmd: PYTHONPATH=. python3 experiments/scripts/preprocess_dataset.py  --ds polemo2  --cfg-type
-      lightning
+  preprocess_dataset@0:
+    cmd: srun  -N 1 --partition=dev-g --account=project_465000858 singularity exec  -B
+      $(pwd):/myrun  /project/project_465000858/klajster.sif  bash -c " \$WITH_CONDA;
+      cd /myrun; PYTHONPATH=. python experiments/scripts/preprocess_dataset.py  --ds
+      polemo2  --cfg-type lightning "
     deps:
     - path: experiments/scripts/preprocess_dataset.py
-      hash: md5
       md5: 343edba64caaa1b105d6bcfa8fdf3cce
       size: 1206
     params:
@@ -32,7 +33,102 @@ stages:
           output: data/datasets/polemo2/lightning/
     outs:
     - path: data/datasets/polemo2/
-      hash: md5
       md5: f46fbd0f6c62feb4a09f5681d0a96949.dir
       size: 6617538
       nfiles: 10
+  run_amd_benchmark@2:
+    cmd: srun  -t 24:00:00 -N 1 --account=project_465000858 --partition=standard-g
+      --ntasks-per-node 4  --gpus $((4*1)) singularity exec  -B $(pwd):/myrun  /project/project_465000858/klajster.sif  bash
+      -c " \$WITH_CONDA; cd /myrun; source setup_envs.sh; PYTHONPATH=. python experiments/scripts/evaluate_lightning_classification.py  --ds
+      polemo2 --embedding-path allegro__herbert-base-cased  --pipeline-params-path
+      experiments/configs/eval/polemo2/allegro__herbert-base-cased.yaml --output-path
+      data/benchmark/amd_allegro__herbert-base-cased_polemo2_num-nodes-1_num-gpus-4
+      --num-nodes 1 --devices 4 --accelerator gpu --retrains 1 "
+    deps:
+    - path: data/datasets/polemo2/
+      md5: f46fbd0f6c62feb4a09f5681d0a96949.dir
+      size: 6617538
+      nfiles: 10
+    - path: experiments/configs/eval/polemo2/allegro__herbert-base-cased.yaml
+      md5: 71ea967db44c1ca9f61688749ea17180
+      size: 973
+    - path: experiments/scripts/evaluate_lightning_classification.py
+      md5: 46cd4b90478a2aba8ac4711ef1e1d895
+      size: 3750
+    outs:
+    - path: data/benchmark/amd_allegro__herbert-base-cased_polemo2_num-nodes-1_num-gpus-4
+      md5: dfad29d932380477311740b97fe863c1.dir
+      size: 672916709
+      nfiles: 6
+  run_amd_benchmark@3:
+    cmd: srun  -t 24:00:00 -N 1 --account=project_465000858 --partition=standard-g
+      --ntasks-per-node 8  --gpus $((8*1)) singularity exec  -B $(pwd):/myrun  /project/project_465000858/klajster.sif  bash
+      -c " \$WITH_CONDA; cd /myrun; source setup_envs.sh; PYTHONPATH=. python experiments/scripts/evaluate_lightning_classification.py  --ds
+      polemo2 --embedding-path allegro__herbert-base-cased  --pipeline-params-path
+      experiments/configs/eval/polemo2/allegro__herbert-base-cased.yaml --output-path
+      data/benchmark/amd_allegro__herbert-base-cased_polemo2_num-nodes-1_num-gpus-8
+      --num-nodes 1 --devices 8 --accelerator gpu --retrains 1 "
+    deps:
+    - path: data/datasets/polemo2/
+      md5: f46fbd0f6c62feb4a09f5681d0a96949.dir
+      size: 6617538
+      nfiles: 10
+    - path: experiments/configs/eval/polemo2/allegro__herbert-base-cased.yaml
+      md5: 71ea967db44c1ca9f61688749ea17180
+      size: 973
+    - path: experiments/scripts/evaluate_lightning_classification.py
+      md5: 46cd4b90478a2aba8ac4711ef1e1d895
+      size: 3750
+    outs:
+    - path: data/benchmark/amd_allegro__herbert-base-cased_polemo2_num-nodes-1_num-gpus-8
+      md5: 8b09039b3fcf28a5958f8a46a49efb67.dir
+      size: 672916562
+      nfiles: 6
+  run_amd_benchmark@1:
+    cmd: srun  -t 24:00:00 -N 1 --account=project_465000858 --partition=standard-g
+      --ntasks-per-node 2  --gpus $((2*1)) singularity exec  -B $(pwd):/myrun  /project/project_465000858/klajster.sif  bash
+      -c " \$WITH_CONDA; cd /myrun; source setup_envs.sh; PYTHONPATH=. python experiments/scripts/evaluate_lightning_classification.py  --ds
+      polemo2 --embedding-path allegro__herbert-base-cased  --pipeline-params-path
+      experiments/configs/eval/polemo2/allegro__herbert-base-cased.yaml --output-path
+      data/benchmark/amd_allegro__herbert-base-cased_polemo2_num-nodes-1_num-gpus-2
+      --num-nodes 1 --devices 2 --accelerator gpu --retrains 1 "
+    deps:
+    - path: data/datasets/polemo2/
+      md5: f46fbd0f6c62feb4a09f5681d0a96949.dir
+      size: 6617538
+      nfiles: 10
+    - path: experiments/configs/eval/polemo2/allegro__herbert-base-cased.yaml
+      md5: 71ea967db44c1ca9f61688749ea17180
+      size: 973
+    - path: experiments/scripts/evaluate_lightning_classification.py
+      md5: 46cd4b90478a2aba8ac4711ef1e1d895
+      size: 3750
+    outs:
+    - path: data/benchmark/amd_allegro__herbert-base-cased_polemo2_num-nodes-1_num-gpus-2
+      md5: 248e1942450c3cd3545c571b9b3f8a19.dir
+      size: 672916263
+      nfiles: 6
+  run_amd_benchmark@0:
+    cmd: srun  -t 24:00:00 -N 1 --account=project_465000858 --partition=standard-g
+      --ntasks-per-node 1  --gpus $((1*1)) singularity exec  -B $(pwd):/myrun  /project/project_465000858/klajster.sif  bash
+      -c " \$WITH_CONDA; cd /myrun; source setup_envs.sh; PYTHONPATH=. python experiments/scripts/evaluate_lightning_classification.py  --ds
+      polemo2 --embedding-path allegro__herbert-base-cased  --pipeline-params-path
+      experiments/configs/eval/polemo2/allegro__herbert-base-cased.yaml --output-path
+      data/benchmark/amd_allegro__herbert-base-cased_polemo2_num-nodes-1_num-gpus-1
+      --num-nodes 1 --devices 1 --accelerator gpu --retrains 1 "
+    deps:
+    - path: data/datasets/polemo2/
+      md5: f46fbd0f6c62feb4a09f5681d0a96949.dir
+      size: 6617538
+      nfiles: 10
+    - path: experiments/configs/eval/polemo2/allegro__herbert-base-cased.yaml
+      md5: 71ea967db44c1ca9f61688749ea17180
+      size: 973
+    - path: experiments/scripts/evaluate_lightning_classification.py
+      md5: 46cd4b90478a2aba8ac4711ef1e1d895
+      size: 3750
+    outs:
+    - path: data/benchmark/amd_allegro__herbert-base-cased_polemo2_num-nodes-1_num-gpus-1
+      md5: 91efad98890928f1656aba67797c04c7.dir
+      size: 672916431
+      nfiles: 6

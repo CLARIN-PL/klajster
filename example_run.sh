@@ -7,5 +7,5 @@ srun \
   --gpus $((NODES*GPUS_PER_NODE)) \
   singularity exec \
     -B $(pwd):/myrun \
-    /flash/project_465000858/klajster.sif \
+    /storage/project_465000858/klajster.sif \
     /myrun/examples/torch/job.sh $GPUS_PER_NODE $NODES
