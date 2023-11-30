@@ -1,5 +1,3 @@
-export MPICH_GPU_SUPPORT_ENABLED=1
-
 srun \
   -t 0:10:0 \
   -N $NODES \
@@ -9,5 +7,5 @@ srun \
   --gpus $((NODES*GPUS_PER_NODE)) \
   singularity exec \
     -B $(pwd):/myrun \
-    /flash/project_465000858/klajster.sif \
+    /storage/project_465000858/klajster.sif \
     /myrun/examples/torch/job.sh $GPUS_PER_NODE $NODES

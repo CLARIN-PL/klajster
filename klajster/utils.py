@@ -33,12 +33,12 @@ def get_create_eval_paths(
 
 
 def parse_dataset_cfg_for_evaluation(
-    dataset_cfg_path: str, cfg_type: str
+    dataset_cfg_path: str, cfg_type: str, gpu_type: str
 ) -> Tuple[str, str, Union[str, Sequence[str]], str]:
     ds_cfg = read_yaml(dataset_cfg_path)
     return (
         ds_cfg["name"],
-        ds_cfg["paths"][cfg_type],
+        ds_cfg["paths"][cfg_type][gpu_type],
         ds_cfg["common_args"]["input_column_names"],
         ds_cfg["common_args"]["target_column_name"],
     )

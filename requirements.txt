@@ -1,6 +1,6 @@
 # clarinpl-embeddings==0.0.1a68769233311344
 # torch==2.0.0
-git+https://github.com/CLARIN-PL/embeddings.git@chore/bump-torch-version
+git+https://github.com/CLARIN-PL/embeddings.git@fix/multi-gpu-preds
 transformers==4.35.1
 annoy==1.17.3
 dvc[s3]==3.29.0
@@ -14,3 +14,5 @@ srsly==2.4.8
 evaluate==0.4.1
 seqeval==1.2.2
 sacremoses==0.1.1
+
+uvicorn==0.24.0
