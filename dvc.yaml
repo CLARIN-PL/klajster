@@ -142,7 +142,7 @@ stages:
       cd /myrun;
       source setup_envs.sh;
       cd RetNet;
-      PYTHONPATH=. python train.py
+      TOKENIZERS_PARALLELISM=false PYTHONPATH=. python train.py
       --devices ${item.device_cfg.num_gpus}
       --num-nodes ${item.device_cfg.num_nodes}
       --output-dir ../data/retnet
@@ -152,9 +152,11 @@ stages:
       --max-length 4096
       --learning-rate 6e-4 
       --weight-decay 0.01 
-      --max-steps 20000
       --batch-size 16
       --num-workers 4
+      --max-steps 200_000
+      --checkpoint-every-n-steps 1_000
+      --check-val-every-n-steps 1_000
       "
     deps:
       - RetNet/train.py
